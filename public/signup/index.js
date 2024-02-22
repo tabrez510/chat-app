@@ -3,9 +3,11 @@ const signupBtn = document.getElementById('signupBtn');
 const form = document.querySelector('form');
 
 const emailInput = document.getElementById('email');
+const phoneInput = document.getElementById('phone');
 const nameInput = document.getElementById('name');
 const passwordInput = document.getElementById('password');
 const invalidEmail = document.getElementById('invalid-email');
+const invalidPhone =  document.getElementById('invalid-phone');
 
 const invalidLength = document.getElementById('invalid-password-length');
 const invalidUpper = document.getElementById('invalid-password-upper');
@@ -115,9 +117,38 @@ const validateEmail = async(email) => {
     return flag;
 }
 
+// input validation for phone during signup
+const validatePhone = async(phone) => {
+    let flag = true;
+    if(phone === ''){
+        invalidPhone.innerHTML = 'Enter phone';
+        invalidPhone.style.display = 'block';
+        flag = false;
+        return;
+    }
+    try{
+        const res = await axios.post(`${baseURL}/user/signup/check-phone`, {phone});
+
+        if(res.data.exists){
+            invalidPhone.style.display = 'block';
+            flag = false;
+        } else {
+            invalidPhone.style.display = 'none';
+        }
+    } catch(err) {
+        console.log(err);
+        alert(err.message);
+    }
+    return flag;
+}
+
 emailInput.addEventListener('input', async(event) => {
     const email = event.target.value;
     validateEmail(email);
+});
+phoneInput.addEventListener('input', async(event) => {
+    const phone = event.target.value;
+    validatePhone(phone);
 });
 
 // saving the form data
@@ -125,13 +156,15 @@ form.addEventListener('submit', async(event) => {
     event.preventDefault();
     const name = event.target.name.value;
     const email = event.target.email.value;
+    const phone = event.target.phone.value;
     const password = event.target.password.value;
-    if(validateName(name) && validateEmail(email) && validatePassword(password)){
+    if(validateName(name) && validateEmail(email) && validatePhone(phone) && validatePassword(password)){
         try {
-            const user = await axios.post(`${baseURL}/user/signup`, {name, email, password});
+            const user = await axios.post(`${baseURL}/user/signup`, {name, email, phone, password});
 
             document.getElementById('name').value = '';
             document.getElementById('email').value = '';
+            document.getElementById('phone').value = '';
             document.getElementById('password').value = '';
 
             document.getElementById('signup-successful').style.display = 'block';
@@ -143,7 +176,7 @@ form.addEventListener('submit', async(event) => {
             invalidNumeric.style.display = 'none';
             invalidSpecial.style.display = 'none';
 
-            window.location.href = '../expense/index.html';
+            // window.location.href = '../expense/index.html';
         } catch(err){
             console.log(err);
             alert(err.message);

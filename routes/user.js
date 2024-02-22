@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 
-const userConyrollers = require('../controllers/user');
+const userControllers = require('../controllers/user');
 
-router.post('/signup/check-email', userConyrollers.checkEmail);
-router.post('/sigup/check-phone', userConyrollers.checkPhone);
-router.post('/signup', userConyrollers.createUser);
+router.post('/signup/check-email', userControllers.checkEmail);
+router.post('/signup/check-phone', userControllers.checkPhone);
+router.post('/signup', userControllers.createUser);
 // router.post('/signin', );
 // router.get('/loggedin-user',);
 
