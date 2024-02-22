@@ -50,8 +50,33 @@ const checkPhone = async (req, res) => {
     }
 }
 
+const validateUser = async (req, res) => {
+    try {
+        const {email, password} = req.body;
+        const existingUser = await User.findOne({where : { email }});
+        if(!existingUser) {
+            return res.status(404).json({match: false, message: 'User not found'});
+        }
+        else {
+            const hashedPasswordFromDatabase = existingUser.password;
+
+            const isMatch = await bcrypt.compare(password, hashedPasswordFromDatabase);
+
+            if(isMatch){
+                return res.status(200).json({match: true, message: null, token: generatedWebToken(existingUser.id, existingUser.name, existingUser.phone)});
+            }
+            else {
+                return res.status(401).json({match: false, message: 'Incorrect password'});
+            }
+        }
+    } catch(err){
+        res.status(500).json({success: false, message: "Internal Server error"});
+    }
+}
+
 module.exports = {
     createUser,
     checkEmail,
-    checkPhone
+    checkPhone,
+    validateUser
 }
