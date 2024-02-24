@@ -1,0 +1,227 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: sans-serif;
+}
+
+body{
+    min-height: 100vh;
+    background-image: linear-gradient(rgba(0,0,50,0.2),rgba(0,0,50,0.2)), url(../images/homepage1.jpg);
+    background-position: center;
+    background-size: cover;
+    background-repeat: repeat;
+}
+
+.main {
+    display: flex;
+}
+
+.group-list {
+    width: 20vw;
+    height: 96vh;
+    margin: 0.5rem;
+    background-color: #fff5;
+    backdrop-filter: blur(7px);
+    border-radius: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
+}
+
+.group-header {
+    background: #3c00a0;
+    width: 100%;
+    height: 8%;
+    border-top-left-radius: inherit;
+    border-top-right-radius: inherit;
+}
+
+.group-header-content {
+    padding: 0.5rem;
+}
+
+.group-header-content h1 {
+    font-size: 1.5rem;
+    color: #eaeaea;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.group-names {
+    max-height: 92%;
+    width: 100%;
+    background-color: #fff8;
+    backdrop-filter: blur(7px);
+    overflow: auto;
+}
+
+.group-names::-webkit-scrollbar, .message-body::-webkit-scrollbar, .users-body::-webkit-scrollbar {
+    width: .3rem;
+    height: .5rem;
+}
+
+.group-names::-webkit-scrollbar-thumb, .message-body::-webkit-scrollbar-thumb, .users-body::-webkit-scrollbar-thumb {
+    visibility: hidden;
+    border-radius: .5rem;
+    background-color: #3c00a0;
+}
+
+.group-names:hover::-webkit-scrollbar-thumb, .message-body:hover::-webkit-scrollbar-thumb, .users-body:hover::-webkit-scrollbar-thumb {
+    visibility: visible;
+}
+.group-names::-webkit-scrollbar-track-piece, .message-body::-webkit-scrollbar-track-piece, .users-body::-webkit-scrollbar-track-piece {
+    visibility: hidden;
+}
+
+.group-name {
+    padding: 0.5rem;
+    border-bottom: solid 1px #3c00a0;
+    cursor: pointer;
+}
+.group-name h1 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.1rem;
+}
+
+.message {
+    min-width: calc(70vw - 4rem);
+    height: 96vh;
+    margin: 0.5rem;
+    background-color: #fff5;
+    backdrop-filter: blur(7px);
+    border-radius: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.message-header {
+    background: #3c00a0;
+    width: 100%;
+    height: 8%;
+    border-top-left-radius: inherit;
+    border-top-right-radius: inherit;
+}
+
+.message-header-content {
+    padding: 0.5rem;
+}
+
+.message-header-content h1 {
+    font-size: 1.5rem;
+    color: #eaeaea;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.message-body {
+    height: 84%;
+    width: 100%;
+    background-color: #fff;
+    backdrop-filter: blur(7px);
+    overflow: auto;
+}
+
+.message-body-content {
+    padding: 0.5rem;
+}
+
+.message-body-content p {
+    font-size: small;
+}
+
+.message-body-content:nth-child(even){
+    width: 100%;
+    background-color: rgba(185, 185, 188, 0.7);
+}
+
+.message-footer {
+    height: 8%;
+    width: 100%;
+    background-color: #3c00a0;
+    border-bottom-left-radius: inherit;
+    border-bottom-right-radius: inherit;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.message-input input {
+    width: 30vw;
+    border: none;
+    padding: 0.4rem;
+    border-radius: 0.2rem;
+}
+
+.message-input input:focus {
+    outline: none;
+}
+
+.message-send button {
+    padding: 0.4rem;
+    border: none;
+    border-radius: 0.2rem;
+    cursor: pointer;
+    margin-left: 0.5rem;
+    font-weight: bold;
+}
+
+.users-list {
+    width: 10vw;
+    height: 96vh;
+    margin: 0.5rem;
+    background-color: #fff5;
+    backdrop-filter: blur(7px);
+    border-radius: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
+}
+
+.users-header {
+    background: #3c00a0;
+    width: 100%;
+    height: 8%;
+    border-top-left-radius: inherit;
+    border-top-right-radius: inherit;
+}
+
+.users-header-content {
+    padding: 0.5rem;
+}
+
+.users-header-content h1 {
+    font-size: 1rem;
+    color: #eaeaea;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.users-body {
+    max-height: 92%;
+    width: 100%;
+    background-color: #fff8;
+    backdrop-filter: blur(7px);
+    overflow: auto;
+}
+
+.users-body-content {
+    padding: 0.2rem 0.1rem;
+    width: 100%;
+    border-bottom: solid 1px #3c00a0;
+    /* cursor: pointer; */
+}
+.users-body-content p {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.8rem;
+}
