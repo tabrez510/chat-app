@@ -23,8 +23,7 @@ signinBtn.addEventListener('submit', async(event) => {
 
             localStorage.setItem('token', isMatch.data.token);
 
-            // window.location.href = `../expense/index.html`;
-            alert('Logged In');
+            window.location.href = `../chat/index.html`;
         }
 
     } catch(err) {

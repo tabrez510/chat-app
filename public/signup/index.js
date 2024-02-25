@@ -176,7 +176,8 @@ form.addEventListener('submit', async(event) => {
             invalidNumeric.style.display = 'none';
             invalidSpecial.style.display = 'none';
 
-            // window.location.href = '../expense/index.html';
+            window.location.href = `../chat/index.html`;
+
         } catch(err){
             console.log(err);
             alert(err.message);

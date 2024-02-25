@@ -8,6 +8,10 @@ const PORT = process.env.PORT || 3000;
 
 const sequelize = require('./utils/database');
 const userRoutes = require('./routes/user');
+const chatRoutes = require('./routes/chat');
+
+const User = require('./models/user');
+const Chat = require('./models/chat');
 
 const app = express();
 
@@ -18,11 +22,14 @@ app.use(cors({
 app.use(bodyParser.json());
 
 app.use('/api/user', userRoutes);
+app.use('/api/user', chatRoutes);
 
 app.use((req, res) => {
     res.sendFile(path.join(__dirname, `public/${req.url}`))
 })
 
+User.hasMany(Chat);
+Chat.belongsTo(User);
 
 sequelize
     .sync({force: false})
