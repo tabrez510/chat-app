@@ -11,3 +11,18 @@ exports.createChat = async(req, res) => {
         res.status(500).json({success: false, message: 'Internal Server Error'});
     }
 }
+
+exports.getChats = async(req, res) => {
+    try {
+
+        const mesg = await Chat.findAll({
+            where: {
+                userId: req.user.id
+            }
+        })
+        res.json([mesg.map((message) =>message.dataValues)]);
+    } catch(err) {
+        console.log(err);
+        res.status(500).json({success: false, message: 'Internal Server Error'});
+    }
+}
