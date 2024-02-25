@@ -1,4 +1,5 @@
 const Chat = require('../models/chat');
+const Sequelize = require('sequelize');
 
 exports.createChat = async(req, res) => {
     try {
@@ -13,8 +14,22 @@ exports.createChat = async(req, res) => {
 
 exports.getChats = async(req, res) => {
     try {
-        const mesg = await Chat.findAll();
-        res.json(mesg.map((message) =>message.dataValues));
+        const lastId = req.query.lastMesgId;
+        let messages;
+
+        if (lastId) {
+            messages = await Chat.findAll({
+                where: {
+                    id: {
+                        [Sequelize.Op.gt]: lastId
+                    }
+                }
+            });
+        } else {
+            messages = await Chat.findAll();
+        }
+        console.log(messages);
+        res.json(messages.map((mesg) => mesg.dataValues));
     } catch(err) {
         console.log(err);
         res.status(500).json({success: false, message: 'Internal Server Error'});

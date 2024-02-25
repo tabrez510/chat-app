@@ -19,10 +19,26 @@ window.addEventListener('DOMContentLoaded', () => {
             return;
         }
         const decodedToken = parseJwt(token);
-        // setInterval(async() => {
-        //     const messages = await axios.get(`${baseURL}/user/chat`, {headers: {"Authorization": token}});
-        //     showMessage(messages.data, decodedToken.userId);
-        // }, 1000);
+        setInterval(async() => {
+            let lastMesgId;
+            const localMessages = JSON.parse(localStorage.getItem('messages')) || [];
+            
+            if(localMessages.length === 0){
+                lastMesgId = undefined;
+            } else {
+                lastMesgId = localMessages[localMessages.length - 1].id;
+            }
+            
+            const messages = await axios.get(`${baseURL}/user/chat?lastMesgId=${lastMesgId}`);
+
+            let allMesg = [...localMessages, ...messages.data];
+            if(allMesg.length > 10) {
+                allMesg = allMesg.slice(-10);
+            }
+            
+            localStorage.setItem('messages', JSON.stringify(allMesg));
+            showMessage(JSON.parse(localStorage.getItem('messages')), decodedToken.userId);
+        }, 1000);
     } catch(err) {
         console.log(err);
         alert(err.message);
