@@ -11,6 +11,10 @@ const Group = sequelize.define('group', {
   name: {
     type: Sequelize.STRING,
     allowNull: false
+  },
+  lastActivity: {
+    type: Sequelize.DATE,
+    allowNull: false
   }
 });
 

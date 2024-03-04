@@ -1,6 +1,17 @@
-const Group = require('../models/Group');
-const UserGroup = require('../models/UserGroup');
+const Group = require('../models/group');
+const UserGroup = require('../models/usergroup');
 const User = require('../models/user');
+const sequelize = require('sequelize');
+// const { json } = require('body-parser');
+
+
+const updateGroupActivity = async (groupId) => {
+    const group = await Group.findByPk(groupId);
+    if (group) {
+        group.lastActivity = new Date(); 
+        await group.save();
+    }
+};
 
 async function adminChecker(userId, groupId){
     try {
@@ -20,8 +31,10 @@ exports.createGroup = async (req, res) => {
     try {
         const {name} = req.body;
         const userId = req.user.id;
-        const group = await Group.create({name});
+        const group = await Group.create({name, lastActivity: new Date()});
         await UserGroup.create({isAdmin: true, userId, groupId: group.id});
+        const io = req.app.get('io');
+        io.emit('newGroup', group);
         res.json({success: true, message: "Group created successfully", ...group.dataValues});
     } catch(err) {
         console.log(err);
@@ -29,12 +42,36 @@ exports.createGroup = async (req, res) => {
     }
 }
 
+exports.getGroups = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const userGroups = await UserGroup.findAll({
+            where: {
+                userId
+            },
+            include: [{ model: Group }],
+            order: [[Group, 'lastActivity', 'DESC']],
+        });
+
+        const groups = userGroups.map((userGroup) => userGroup.group);
+
+        res.json(groups.map((group) => group.dataValues));
+
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({success: false, message: "Internal Server Error"});
+    }
+}
+
 exports.addUserToGroup = async (req, res) => {
     try {
-        const { userId } = req.body;
-        const groupId = req.params.groupId;
-        if(adminChecker(req.user.id, groupId)){
+        const { userId, groupId } = req.body;
+        const isAdmin = await adminChecker(req.user.id, groupId);
+        if(isAdmin){
             await UserGroup.create({isAdmin: false, userId, groupId});
+            const io = req.app.get('io');
+            io.to(groupId).emit('userAddedToGroup', userId);
+            await updateGroupActivity(groupId);
             res.json({success: true, message: "User added successfully"});
         } else {
             res.json({success: false, message: "You are not an admin"})
@@ -47,15 +84,18 @@ exports.addUserToGroup = async (req, res) => {
 
 exports.removeUserFromGroup = async (req, res) => {
     try {
-        const { userId } = req.body;
-        const groupId = req.params.groupId;
-        if(adminChecker(req.user.id, groupId)){
+        const { userId, groupId } = req.body;
+        const isAdmin = await adminChecker(req.user.id, groupId);
+        if(isAdmin){
             await UserGroup.destroy({
                 where : {
                     userId,
                     groupId
                 }
             })
+            await updateGroupActivity(groupId);
+            const io = req.app.get('io');
+            io.to(groupId).emit('userRemovedFromGroup', userId);
             res.json({success: false, message: "User removed from group successfully"});
         } else {
             res.json({success: false, message: "You are not an admin"})
@@ -69,8 +109,12 @@ exports.removeUserFromGroup = async (req, res) => {
 exports.makeAdmin = async (req, res) => {
     try {
         const { userId, groupId } = req.body;
-        if(adminChecker(req.user.id, groupId)){
+        const isAdmin = await adminChecker(req.user.id, groupId);
+        if(isAdmin){
             await UserGroup.update({ isAdmin: true }, { where: { userId, groupId } });
+            await updateGroupActivity(groupId);
+            const io = req.app.get('io');
+            io.to(groupId).emit('adminMade', userId);
             res.json({ success: true, message: 'User made admin successfully' });
         } else {
             res.json({success: false, message: "You are not an admin"})
@@ -84,8 +128,12 @@ exports.makeAdmin = async (req, res) => {
 exports.removeAdmin = async (req, res) => {
     try {
         const { userId, groupId } = req.body;
-        if(adminChecker(req.user.id, groupId)){
+        const isAdmin = await adminChecker(req.user.id, groupId);
+        if(isAdmin){
             await UserGroup.update({ isAdmin: false }, { where: { userId, groupId } });
+            await updateGroupActivity(groupId);
+            const io = req.app.get('io');
+            io.to(groupId).emit('adminRemoved', userId);
             res.json({ success: true, message: 'User made admin successfully' });
         } else {
             res.json({success: false, message: "You are not an admin"})
@@ -99,6 +147,7 @@ exports.removeAdmin = async (req, res) => {
 exports.getGroupUsers = async (req, res) => {
     try {
         const groupId = req.params.groupId;
+        const isadmin = await adminChecker(req.user.id, groupId);
 
         const usersInGroup = await User.findAll({
             include: [{
@@ -110,7 +159,7 @@ exports.getGroupUsers = async (req, res) => {
                 [{ model: UserGroup }, 'isAdmin', 'DESC'] // Sort by isAdmin in descending order
             ]
         });
-    
+        res.setHeader('Isadmin', isadmin.toString());
         res.json(usersInGroup.map((user) => user.dataValues));
     } catch(err) {
         console.log(err);
@@ -121,18 +170,29 @@ exports.getGroupUsers = async (req, res) => {
 exports.getAvailableUsersForGroup = async (req, res) => {
     try {
         const groupId = req.params.groupId;
+        const isadmin = await adminChecker(req.user.id, groupId);
 
         // Find users who are not part of the specified group
+        // Find the group by ID and include its associated users
+        const group = await Group.findByPk(groupId, {
+            include: [{
+                model: User,
+                through: { attributes: [] } // Exclude the join table attributes
+            }]
+        });
+
+        // Get the IDs of users already in the group
+        const usersInGroupIds = group.users.map(user => user.id);
+
+        // Find users who are not part of the group
         const usersNotInGroup = await User.findAll({
             where: {
                 id: {
-                    [sequelize.Op.notIn]: sequelize.literal(
-                        `(SELECT "userId" FROM "userGroup" WHERE "groupId" = ${groupId})`
-                    )
+                    [sequelize.Op.notIn]: usersInGroupIds // Exclude current user
                 }
             }
         });
-
+        res.setHeader('Isadmin', isadmin.toString());
         res.json(usersNotInGroup.map((user) => user.dataValues));
     } catch (error) {
         console.log(error);

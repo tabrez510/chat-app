@@ -3,8 +3,10 @@ const Sequelize = require('sequelize');
 
 exports.createChat = async(req, res) => {
     try {
-        const {gorupId, message} = req.body;
-        const mesg = await Chat.create({message, name: req.user.name, userId: req.user.id, gorupId});
+        const {groupId, message} = req.body;
+        const mesg = await Chat.create({message, name: req.user.name, userId: req.user.id, groupId});
+        const io = req.app.get('io');
+        io.to(groupId).emit('newMessage', mesg);
         res.json({success: true, ...mesg.dataValues, message: 'Message sent successfully'});
     } catch(err) {
         console.log(err);

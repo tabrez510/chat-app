@@ -273,5 +273,21 @@ body{
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 0.8rem;
+    font-size: 1rem;
+    margin: 0.2rem auto;
+}
+.group-users-btn{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.group-users-btn button {
+    background-color: #3c00a0;
+    color: #eaeaea;
+    padding: 0.2rem;
+    border: none;
+    border-radius: 0.15rem;
+    cursor: pointer;
+    margin:  0.1rem;
+    font-size: 0.65rem;
 }
