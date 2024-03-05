@@ -18,9 +18,9 @@ body{
 }
 
 .group-list {
-    width: 20vw;
+    width: 30vw;
     height: 97.2vh;
-    margin: 0.5rem;
+    margin: 0.5rem 0.25rem;
     background-color: #fff5;
     backdrop-filter: blur(7px);
     border-radius: 0.5rem;
@@ -110,9 +110,10 @@ body{
 }
 
 .message {
-    min-width: calc(70vw - 4rem);
+    width: calc(70vw - 2rem);
+    max-width: calc(70vw-2rem);
     height: 97.2vh;
-    margin: 0.5rem;
+    margin: 0.5rem 0.25rem;
     background-color: #fff5;
     backdrop-filter: blur(7px);
     border-radius: 0.5rem;
@@ -216,15 +217,17 @@ body{
 
 .users-list {
     height: 97.2vh;
+    width: 0;
     display: flex;
-    margin: 0.5rem;
+    margin: 0.5rem 0.25rem;
     flex-direction: column;
     justify-content: space-between;
     align-items: center;
+    transition: width 0.2s ease-in;
 }
 
 .group-user-list , .available-user-list {
-    width: 15vw;
+    width: 100%;
     height: 49.5%;
     background-color: #fff5;
     backdrop-filter: blur(7px);

@@ -12,8 +12,6 @@ exports.authenticate = async (req, res, next) => {
         const user = await User.findByPk(decryptUser.userId);
         if(user) {
             req.user = user;
-
-            console.log(req.user);
             
             next();
         } else {

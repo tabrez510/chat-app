@@ -4,12 +4,12 @@ const socketIO = require('socket.io');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
-const jwt = require('jsonwebtoken');
 
 require('dotenv').config();
 const PORT = process.env.PORT || 3000;
 
 const sequelize = require('./utils/database');
+const initializeSocket = require('./socketHandler/socket');
 const userRoutes = require('./routes/user');
 const chatRoutes = require('./routes/chat');
 const groupRoutes = require('./routes/group');
@@ -26,38 +26,35 @@ const io = socketIO(server, {
         origin: "http://127.0.0.1:5501"
     }
 });
+initializeSocket(io);
 
 app.set('io', io);
 
-io.on('connection', async(socket) => {
-    console.log('User connected: ', socket.id);
-    const token = socket.handshake.query.token;
+// io.on('connection', async(socket) => {
+//     console.log('User connected: ', socket.id);
+//     const token = socket.handshake.query.token;
     
-    try {
-        // Verify the JWT token
-        const decoded = jwt.verify(token, process.env.TOKEN_SECRET);
+//     try {
+//         const decoded = jwt.verify(token, process.env.TOKEN_SECRET);
         
-        // Retrieve user ID from the decoded token
-        const userId = decoded.userId;
+//         const userId = decoded.userId;
 
-        // Find the user by user ID
-        const user = await User.findByPk(userId);
-        if (user) {
-            // Update the user's socket ID in the user table
-            user.socketId = socket.id;
-            await user.save();
-            console.log(`Socket ID updated for user ${userId}: ${socket.id}`);
-        } else {
-            console.log(`User with ID ${userId} not found.`);
-        }
-    } catch (error) {
-        console.error('Authentication error:', error);
-    }
+//         const user = await User.findByPk(userId);
+//         if (user) {
+//             user.socketId = socket.id;
+//             await user.save();
+//             console.log(`Socket ID updated for user ${userId}: ${socket.id}`);
+//         } else {
+//             console.log(`User with ID ${userId} not found.`);
+//         }
+//     } catch (error) {
+//         console.error('Authentication error:', error);
+//     }
 
-    socket.on('disconnect', () => {
-        console.log('User disconnected: ', socket.id);
-    });
-});
+//     socket.on('disconnect', () => {
+//         console.log('User disconnected: ', socket.id);
+//     });
+// });
 
 app.use(cors({
     origin: "http://127.0.0.1:5501",

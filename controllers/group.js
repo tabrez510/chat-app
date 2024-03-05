@@ -2,7 +2,6 @@ const Group = require('../models/group');
 const UserGroup = require('../models/usergroup');
 const User = require('../models/user');
 const sequelize = require('sequelize');
-// const { json } = require('body-parser');
 
 
 const updateGroupActivity = async (groupId) => {
@@ -34,7 +33,6 @@ exports.createGroup = async (req, res) => {
         const group = await Group.create({name, lastActivity: new Date()});
         await UserGroup.create({isAdmin: true, userId, groupId: group.id});
         const io = req.app.get('io');
-        io.emit('newGroup', group);
         res.json({success: true, message: "Group created successfully", ...group.dataValues});
     } catch(err) {
         console.log(err);
@@ -70,8 +68,13 @@ exports.addUserToGroup = async (req, res) => {
         if(isAdmin){
             await UserGroup.create({isAdmin: false, userId, groupId});
             const io = req.app.get('io');
-            io.to(groupId).emit('userAddedToGroup', userId);
             await updateGroupActivity(groupId);
+            const user = await User.findOne({
+                where: {
+                    id: userId
+                }
+            })
+            io.to(user.socketId).emit('userAddedToGroup');
             res.json({success: true, message: "User added successfully"});
         } else {
             res.json({success: false, message: "You are not an admin"})
@@ -94,8 +97,13 @@ exports.removeUserFromGroup = async (req, res) => {
                 }
             })
             await updateGroupActivity(groupId);
+            const user = await User.findOne({
+                where: {
+                    id: userId
+                }
+            })
             const io = req.app.get('io');
-            io.to(groupId).emit('userRemovedFromGroup', userId);
+            io.to(user.socketId).emit('userRemovedFromGroup', {groupId});
             res.json({success: false, message: "User removed from group successfully"});
         } else {
             res.json({success: false, message: "You are not an admin"})
@@ -113,8 +121,13 @@ exports.makeAdmin = async (req, res) => {
         if(isAdmin){
             await UserGroup.update({ isAdmin: true }, { where: { userId, groupId } });
             await updateGroupActivity(groupId);
+            const user = await User.findOne({
+                where: {
+                    id: userId
+                }
+            })
             const io = req.app.get('io');
-            io.to(groupId).emit('adminMade', userId);
+            io.to(user.socketId).emit('adminMade', groupId);
             res.json({ success: true, message: 'User made admin successfully' });
         } else {
             res.json({success: false, message: "You are not an admin"})
@@ -132,8 +145,13 @@ exports.removeAdmin = async (req, res) => {
         if(isAdmin){
             await UserGroup.update({ isAdmin: false }, { where: { userId, groupId } });
             await updateGroupActivity(groupId);
+            const user = await User.findOne({
+                where: {
+                    id: userId
+                }
+            })
             const io = req.app.get('io');
-            io.to(groupId).emit('adminRemoved', userId);
+            io.to(user.socketId).emit('adminRemoved', groupId);
             res.json({ success: true, message: 'User made admin successfully' });
         } else {
             res.json({success: false, message: "You are not an admin"})
