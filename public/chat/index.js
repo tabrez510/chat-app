@@ -21,7 +21,6 @@ socket.on('userAddedToGroup', async() => {
     try {
         const groupsList = await axios.get(`${baseURL}/user/get-groups`, {headers: {"Authorization": token}});
         showGroups(groupsList.data);
-        alert('Someone has added you in their group.')
     } catch(err){
         console.log(err);
         alert(err.message);
@@ -30,7 +29,6 @@ socket.on('userAddedToGroup', async() => {
 
 socket.on('userRemovedFromGroup', async(data) => {
     if(data.groupId === currentGroup){
-        alert('Admin has removed you.');
         location.reload();
     } else {
         const groupsList = await axios.get(`${baseURL}/user/get-groups`, {headers: {"Authorization": token}});
@@ -66,6 +64,8 @@ function parseJwt (token) {
 
     return JSON.parse(jsonPayload);
 }
+
+
 
 function showGroups (groups) {
     const groupNames = document.querySelector('.group-names');
@@ -117,6 +117,7 @@ window.addEventListener('DOMContentLoaded', async() => {
 
 async function createMessage (groupId) {
     const mesgInput = document.getElementById('message').value;
+    const fileInput = document.getElementById('file-input').files[0];
     const token = localStorage.getItem('token');
     const decoded = parseJwt(token);
     if(!token){
@@ -124,37 +125,195 @@ async function createMessage (groupId) {
         return;
     }
     try{
-        await axios.post(`${baseURL}/user/chat`, {groupId, message: mesgInput}, {headers: {"Authorization": token}});
+        let mediaUrl = null;
+        if (!mesgInput && !fileInput) {
+            alert('Please enter a message or select a file.');
+            return;
+        }
+
+        if (fileInput) {
+            const formData = new FormData();
+            formData.append('groupId', groupId);
+            formData.append('file', fileInput);
+
+            const response = await axios.post(`${baseURL}/user/send-file`, formData, {
+                headers: {
+                    'Authorization': token,
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            mediaUrl = response.data.url;
+
+            await axios.post(`${baseURL}/user/chat`, { groupId, message: mesgInput || null, multimedia: mediaUrl }, {
+                headers: { "Authorization": token }
+            });
+
+
+        } else {
+            await axios.post(`${baseURL}/user/chat`, { groupId, message: mesgInput, multimedia: null }, {
+                headers: { "Authorization": token }
+            });
+        }
         document.getElementById('message').value = '';
-        displaySingleMesg(mesgInput, groupId);
+        document.getElementById('file-input').value = '';
+        const fileInputLabel = document.getElementById('file-input-label');
+
+        fileInputLabel.innerHTML =`<i class="fas fa-images">`;
+
+
+        displaySingleMesg(mesgInput, mediaUrl, groupId);
     } catch(err) {
         console.log(err);
         alert(err.message);
     }
 }
 
+
+// whenever opening any groups display the messages 
 function showMessage(messages, userId) {
     const mesgBody = document.querySelector('.message-body');
     mesgBody.innerHTML = '';
     let userName = '';
     messages.forEach((element) => {
+        let mediaUrl = element.multimedia;
+        let message = element.message || '';
         if(element.userId === userId){
-            userName = 'You';
+            if (!mediaUrl) {
+                mesgBody.innerHTML += `<div class="message-body-content">
+                        <p><span style="font-weight: bold; color: green;">You</span>: ${message}</p>
+                    </div>`;
+            } else {
+                let mediaContent;
+                if (mediaUrl.endsWith('.jpg') || mediaUrl.endsWith('.jpeg') || mediaUrl.endsWith('.png') || mediaUrl.endsWith('.gif')) {
+                    mediaContent = `<div style="position: relative;">
+                                        <a href="${mediaUrl}" download>
+                                            <i class="fas fa-download" style="position: absolute; top: 0; right: 0; font-size: 1.2rem;"></i>
+                                        </a>
+                                        <img src="${mediaUrl}" />
+                                    </div>`;
+                } else if (mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.avi') || mediaUrl.endsWith('.webm')) {
+                    mediaContent = `<div style="position: relative;">
+                                        <a href="${mediaUrl}" download>
+                                            <i class="fas fa-download" style="position: absolute; top: 0; right: 0; font-size: 1.2rem;"></i>
+                                        </a>
+                                        <video controls><source src="${mediaUrl}"></video>
+                                    </div>`;
+                } else {
+                    mediaContent = `<div style="position: relative;">
+                                        <a href="${mediaUrl}" download>
+                                            <i class="fas fa-download" style="position: absolute; top: 0; right: 0; font-size: 1.2rem;"></i>
+                                        </a>
+                                        <span>Download File</span>
+                                    </div>`;
+                }
+                
+                mesgBody.innerHTML += `<div class="message-body-content">
+                        <p><span style="font-weight: bold; color: green;">You</span>: ${message}</p>
+                        ${mediaContent}
+                    </div>`;
+            }
         } else {
             userName = `${element.name}`;
+            if (!mediaUrl) {
+                mesgBody.innerHTML += `<div class="message-body-content">
+                        <p><span style="font-weight: bold;">${userName}</span>: ${message}</p>
+                    </div>`;
+            } else {
+                let mediaContent;
+                if (mediaUrl.endsWith('.jpg') || mediaUrl.endsWith('.jpeg') || mediaUrl.endsWith('.png') || mediaUrl.endsWith('.gif')) {
+                    mediaContent = `<div style="position: relative;">
+                                        <a href="${mediaUrl}" download>
+                                            <i class="fas fa-download" style="position: absolute; top: 0; right: 0; font-size: 1.2rem;"></i>
+                                        </a>
+                                        <img src="${mediaUrl}" />
+                                    </div>`;
+                } else if (mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.avi') || mediaUrl.endsWith('.webm')) {
+                    mediaContent = `<div style="position: relative;">
+                                        <a href="${mediaUrl}" download>
+                                            <i class="fas fa-download" style="position: absolute; top: 0; right: 0; font-size: 1.2rem;"></i>
+                                        </a>
+                                        <video controls><source src="${mediaUrl}"></video>
+                                    </div>`;
+                } else {
+                    mediaContent = `<div style="position: relative;">
+                                        <a href="${mediaUrl}" download>
+                                            <i class="fas fa-download" style="position: absolute; top: 0; right: 0; font-size: 1.2rem;"></i>
+                                        </a>
+                                        <span>Download File</span>
+                                    </div>`;
+                }
+                
+                mesgBody.innerHTML += `<div class="message-body-content">
+                        <p><span style="font-weight: bold;">${userName}</span>: ${message}</p>
+                        ${mediaContent}
+                    </div>`;
+            }
         }
-
-        mesgBody.innerHTML += `<div class="message-body-content">
-            <p><span style="font-weight: bold">${userName}</span>: ${element.message}</p>
-        </div>`
     })
+
+    const images = mesgBody.querySelectorAll('img');
+    let loadedImageCount = 0;
+
+    images.forEach(image => {
+        image.addEventListener('load', () => {
+            loadedImageCount++;
+            if (loadedImageCount === images.length) {
+                // All images have loaded, scroll to the bottom
+                mesgBody.scrollTop = mesgBody.scrollHeight;
+            }
+        });
+    });
 }
 
-function displaySingleMesg(message, groupId) {
+function displaySingleMesg(message, mediaUrl, groupId) {
     const mesgBody = document.querySelector('.message-body');
-    mesgBody.innerHTML += `<div class="message-body-content">
-            <p><span style="font-weight: bold">You</span>: ${message}</p>
-        </div>`
+    if (!mediaUrl) {
+        mesgBody.innerHTML += `<div class="message-body-content">
+                <p><span style="font-weight: bold; color: green;">You</span>: ${message}</p>
+            </div>`;
+    } else {
+        let mediaContent;
+        if (mediaUrl.endsWith('.jpg') || mediaUrl.endsWith('.jpeg') || mediaUrl.endsWith('.png') || mediaUrl.endsWith('.gif')) {
+            mediaContent = `<div style="position: relative;">
+                                <a href="${mediaUrl}" download>
+                                    <i class="fas fa-download" style="position: absolute; top: 0; right: 0; font-size: 1.2rem;"></i>
+                                </a>
+                                <img src="${mediaUrl}" />
+                            </div>`;
+        } else if (mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.avi') || mediaUrl.endsWith('.webm')) {
+            mediaContent = `<div style="position: relative;">
+                                <a href="${mediaUrl}" download>
+                                    <i class="fas fa-download" style="position: absolute; top: 0; right: 0; font-size: 1.2rem;"></i>
+                                </a>
+                                <video controls><source src="${mediaUrl}"></video>
+                            </div>`;
+        } else {
+            mediaContent = `<div style="position: relative;">
+                                <a href="${mediaUrl}" download>
+                                    <i class="fas fa-download" style="position: absolute; top: 0; right: 0; font-size: 1.2rem;"></i>
+                                </a>
+                                <span>Download File</span>
+                            </div>`;
+        }
+        
+        mesgBody.innerHTML += `<div class="message-body-content">
+                <p><span style="font-weight: bold; color: green;">You</span>: ${message}</p>
+                ${mediaContent}
+            </div>`;
+    }
+    const images = mesgBody.querySelectorAll('img');
+    let loadedImageCount = 0;
+
+    images.forEach(image => {
+        image.addEventListener('load', () => {
+            loadedImageCount++;
+            if (loadedImageCount === images.length) {
+                // All images have loaded, scroll to the bottom
+                mesgBody.scrollTop = mesgBody.scrollHeight;
+            }
+        });
+    });
 }
 
 async function openGroupChats(groupId, groupName) {
@@ -324,12 +483,32 @@ async function showMessageBox (groupId, groupName) {
             </div>
             <div class="message-footer">
                 <div class="message-input">
+                    <label for="file-input" id="file-input-label">
+                        <i class="fas fa-images"></i>
+                    </label>
+                    <input type="file" id="file-input" name="file" style="display: none;">
                     <input type="text" id="message" name="message">
                 </div>
                 <div class="message-send">
                     <button type="button" id="send-message" onclick="createMessage(${groupId})">Send</button>
                 </div>
             </div>`
+
+            const fileInput = document.getElementById('file-input');
+
+            // Add event listener to file input
+            fileInput.addEventListener('change', () => {
+                const selectedFile = fileInput.files[0];
+
+                const fileInputLabel = document.getElementById('file-input-label');
+                if(selectedFile.name.length > 14){
+                    var filename = selectedFile.name.slice(0,6) + '...' + selectedFile.name.slice(selectedFile.name.length-5);
+                }
+
+                if (selectedFile) {
+                    fileInputLabel.innerHTML =`<i class="fas fa-images"><span style="font-size: 1rem; font-weight: normal">${filename}</span>`;
+                }
+            });
 
             const decodedToken = parseJwt(token);
             let lastMesgId;

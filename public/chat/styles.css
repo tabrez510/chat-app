@@ -166,6 +166,16 @@ body{
     backdrop-filter: blur(7px);
     overflow: auto;
 }
+.message-body-content img {
+    max-width: 50%;
+    height: auto;
+}
+
+/* For videos */
+.message-body-content video {
+    max-width: 50%;
+    height: auto;
+}
 
 .message-body-content {
     padding: 0.5rem;
@@ -189,6 +199,12 @@ body{
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+#file-input-label i{
+    color: #eaeaea;
+    font-size: 1.2rem;
+    margin-right: 0.3rem;
 }
 
 .message-input input {
