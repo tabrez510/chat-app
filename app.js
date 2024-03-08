@@ -10,6 +10,7 @@ const PORT = process.env.PORT || 3000;
 
 const sequelize = require('./utils/database');
 const initializeSocket = require('./socketHandler/socket');
+const cronJob = require('./cron/cronJob');
 const userRoutes = require('./routes/user');
 const chatRoutes = require('./routes/chat');
 const groupRoutes = require('./routes/group');
@@ -18,6 +19,7 @@ const User = require('./models/user');
 const Chat = require('./models/chat');
 const Group = require('./models/group');
 const UserGroup = require('./models/usergroup');
+const ArchivedChat = require('./models/archivedchat');
 
 const app = express();
 const server = http.createServer(app);
@@ -80,15 +82,20 @@ Group.hasMany(UserGroup);
 UserGroup.belongsTo(Group);
 
 User.hasMany(Chat);
+User.hasMany(ArchivedChat);
 Chat.belongsTo(User);
+ArchivedChat.belongsTo(User);
 
 Group.hasMany(Chat);
+Group.hasMany(ArchivedChat);
 Chat.belongsTo(Group);
+ArchivedChat.belongsTo(Group);
 
 sequelize
     .sync({force: false})
     .then((res) => {
         server.listen(PORT);
+        cronJob.start();
     })
     .catch((err) => {
         console.log(err);

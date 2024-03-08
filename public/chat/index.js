@@ -86,8 +86,7 @@ document.getElementById('create-group-btn').addEventListener('click', async() =>
     }
     try{
         const groupRes = await axios.post(`${baseURL}/user/create-group`, {name: createGroupInput}, {headers: {"Authorization": token}});
-        document.getElementById('message').value = '';
-        console.log(groupRes);
+        document.getElementById('create-group').value = '';
         const groupsList = await axios.get(`${baseURL}/user/get-groups`, {headers: {"Authorization": token}});
         showGroups(groupsList.data);
     } catch(err) {
