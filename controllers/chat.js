@@ -1,4 +1,5 @@
 const Chat = require('../models/chat');
+const ArchivedChat = require('../models/archivedchat');
 const Sequelize = require('sequelize');
 const AWS = require('aws-sdk');
 const multer = require('multer');
@@ -36,35 +37,88 @@ exports.createChat = async(req, res) => {
 
 exports.uploadFile = upload.single('file');
 
-exports.getChats = async(req, res) => {
+// exports.getChats = async(req, res) => {
+//     try {
+//         const lastId = req.query.lastMesgId;
+//         const groupId = req.params.groupId;
+//         let messages;
+
+//         if (lastId) {
+//             messages = await Chat.findAll({
+//                 where: {
+//                     id: {
+//                         [Sequelize.Op.gt]: lastId
+//                     },
+//                     groupId
+//                 }
+//             });
+//         } else {
+//             messages = await Chat.findAll({
+//                 where : {
+//                     groupId
+//                 }
+//             });
+//         }
+//         console.log(messages);
+//         res.json(messages.map((mesg) => mesg.dataValues));
+//     } catch(err) {
+//         console.log(err);
+//         res.status(500).json({success: false, message: 'Internal Server Error'});
+//     }
+// }
+
+exports.getChats = async (req, res) => {
     try {
-        const lastId = req.query.lastMesgId;
         const groupId = req.params.groupId;
+        const cursor = req.query.cursor;
+        const limit = parseInt(req.query.limit) || 20;
+
         let messages;
 
-        if (lastId) {
-            messages = await Chat.findAll({
+        if (cursor !== 'null') {
+            const chatMessages = await Chat.findAll({
                 where: {
-                    id: {
-                        [Sequelize.Op.gt]: lastId
-                    },
-                    groupId
-                }
+                    groupId,
+                    createdAt: { [Sequelize.Op.lt]: cursor }
+                },
+                order: [['createdAt', 'ASC']],
+                limit: limit
             });
+
+            const archivedChatMessages = await ArchivedChat.findAll({
+                where: {
+                    groupId,
+                    createdAt: { [Sequelize.Op.lt]: cursor }
+                },
+                order: [['createdAt', 'ASC']],
+                limit: limit - chatMessages.length
+            });
+
+            messages = [...chatMessages, ...archivedChatMessages];
         } else {
-            messages = await Chat.findAll({
-                where : {
-                    groupId
-                }
+            const chatMessages = await Chat.findAll({
+                where: { groupId },
+                order: [['createdAt', 'DESC']],
+                limit: limit
             });
+
+            const archivedChatMessages = await ArchivedChat.findAll({
+                where: { groupId },
+                order: [['createdAt', 'DESC']], 
+                limit: limit - chatMessages.length
+            });
+
+            messages = [...chatMessages, ...archivedChatMessages];
+            messages.sort((a, b) => a.createdAt - b.createdAt);
         }
-        console.log(messages);
-        res.json(messages.map((mesg) => mesg.dataValues));
-    } catch(err) {
-        console.log(err);
-        res.status(500).json({success: false, message: 'Internal Server Error'});
+
+
+        res.json(messages.map((message) => message.dataValues));
+    } catch (error) {
+        console.error('Error fetching messages:', error);
+        res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
-}
+};
 
 exports.sendFile = async (req, res) => {
     try {
